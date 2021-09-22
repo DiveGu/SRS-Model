@@ -11,6 +11,24 @@ from sklearn.metrics import roc_auc_score
 # 0 代表这个位置的item不在TOP预测中
 
 
+# 测试在test上的表现
+def evaluate_performance(predict,K):
+    # predict [N,1+100] 
+    hit=0.
+    ndcg=0.
+    # 看每一行的idx=0是否在topK中
+    tmp=(-predict).argsort(axis=1)[:,:K]
+    for i in range(tmp.shape[0]):
+        for j in range(K):
+            if(tmp[i][j]==0):
+                hit+=1.
+                ndcg+=1/np.log2(j+2)
+                break
+    hit/=tmp.shape[0]
+    ndcg/=tmp.shape[0]
+
+    return hit,ndcg
+
 def recall_at_k(r,k,all_pos_num):
     r=np.array(r)[:k]
     return float(np.sum(r)/all_pos_num)

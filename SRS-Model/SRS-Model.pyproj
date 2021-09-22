@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>9920e6ed-7ae5-422a-8252-f68705f58802</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>SRS_Model.py</StartupFile>
+    <StartupFile>main.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,7 +21,31 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="main.py" />
+    <Compile Include="model\BPRMF.py" />
+    <Compile Include="model\DGCF.py" />
+    <Compile Include="model\SASRec.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="SRS_Model.py" />
+    <Compile Include="test.py" />
+    <Compile Include="utils\data_preprocess.py" />
+    <Compile Include="utils\helper.py" />
+    <Compile Include="utils\loader_origin.py" />
+    <Compile Include="utils\load_data.py" />
+    <Compile Include="utils\load_data_history.py" />
+    <Compile Include="utils\metrics.py" />
+    <Compile Include="utils\parser.py" />
+    <Compile Include="utils\splitter.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="model\" />
+    <Folder Include="model\__pycache__\" />
+    <Folder Include="utils\" />
+    <Folder Include="utils\__pycache__\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="model\__pycache__\SASRec.cpython-37.pyc" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

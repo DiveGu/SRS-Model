@@ -3,109 +3,127 @@
 生成batch样本
 '''
 import json
+from time import time
+import numpy as np
 import pandas as pd
-import random as rd
+import random
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from collections import defaultdict
 
-class Data(object):
+# 数据集准备
+class Data_Sequence():
+
     def __init__(self, path, batch_size):
-
         self.path = path
         self.batch_size = batch_size
 
-        train_file = path + '/train.csv'
-        test_file = path + '/test.csv'
-
-        # 用户数量 物品数量 train数量
-        self.n_train, self.n_test = 0, 0
-        self.n_users, self.n_items = 0, 0
-
-        self.train_df, self.train_user_dict = self._load_ratings_train(train_file)
-        self.test_df, self.test_user_dict = self._load_ratings_test(test_file)
-        # train中的user集合
-        self.exist_users = self.train_user_dict.keys()
-
-        # 加载测试集的负采样
-        #f = open(path+'test_neg.txt','r')
-        #test_neg_dict=json.loads(f.read())
-
-        #self._statistic_ratings()
-
-    # 加载训练集
-    def _load_ratings_train(self,train_file):
-        train_df=pd.read_csv(train_file)
-        self.n_train=train_df.shape[0]
-        user_dict=dict()
-        ui_group = train_df.groupby(['user'], as_index=False)
-        for i,j in ui_group:
-            user_dict[i]=list(j['item'])
-            
-        self.n_users=train_df['user'].max()
-        self.n_items=train_df['item'].max()
-        return train_df,user_dict
-
-    # 加载测试集
-    def _load_ratings_test(self,test_file):
-        test_df=pd.read_csv(test_file)
-        self.n_test=test_df.shape[0]
-        user_dict=dict()
-        ui_group = test_df.groupby(['user'], as_index=False)
-        for i,j in ui_group:
-            user_dict[i]=list(j['item'])
-            
-        self.n_users=max(self.n_users,test_df['user'].max())
-        self.n_items=max(self.n_items,test_df['item'].max())
-        self.n_users+=1 # 数量要考虑idx==0 所以+1
-        self.n_items+=1 # 数量要考虑idx==0 所以+1
-        return test_df,user_dict
+        self.train_file = path + '/train.csv'
+        self.test_file = path + '/test.csv'
 
 
-    # 输出数据的基本信息
-    def _statistic_ratings(self):
-        print('n_users=%d, n_items=%d' % (self.n_users, self.n_items))
-        print('n_interactions=%d' % (self.n_train + self.n_test))
-        print('n_train=%d, n_test=%d, sparsity=%.5f' % (self.n_train, self.n_test, (self.n_train + self.n_test)/(self.n_users * self.n_items)))
+    # 负采样 从[0,n_items-1]采样出不在pos_list中的
+    def gen_neg(self,pos_list):
+        neg_id=pos_list[0]
+        while(neg_id in set(pos_list)):
+            neg_id=random.randint(0,self.n_items-1)
+        return neg_id
 
-    # 生成样本之前先为每一个正样本采样一个负样本 形成新的train_df [uid,pos_iid,neg_iid]
-    def _sample(self):
-        neg_list=[]
-        for k,v in self.train_user_dict.items():
-            # 为每个用户采样len(v) 个负样本
-            sample_num=len(v)
-            sub_item_pool=set(range(self.n_items))-set(self.train_user_dict[k])-set(self.test_user_dict[k])
-            #print('用户id{}，交互数量{}，候选池数量{}'.format(k,len(set(self.train_user_dict[k])|set(self.test_user_dict[k])),len(sub_item_pool)))
-            sample_num=min(len(v),len(sub_item_pool))
-            if(sample_num==len(v)):
-                negs=rd.sample(sub_item_pool, sample_num)
-            else:
-                # 当用户k的交互数量非常多的时候 item_pool的数量小于len(v) 反复采样 必须采样len(v)个
-                negs=[]
-                while(len(negs)<len(v)):
-                    tmp_num=len(sub_item_pool) if len(v)-len(negs)>=len(sub_item_pool) else len(v)-len(negs)
-                    negs=negs+rd.sample(sub_item_pool, tmp_num)
-            neg_list=neg_list+negs
 
-        return neg_list
+    # 加载数据集
+    def load_dataset(self):
+        tmp_path=self.path+'dataset.npz'
+        try:
+            dataset=np.load(tmp_path)
+            def get_ar_list(dataset,name):
+                return [dataset[name+'_hist'],dataset[name+'_pos_id'],dataset[name+'_neg_id']]
 
+            self.train=get_ar_list(dataset,'train')
+            self.val=get_ar_list(dataset,'val')
+            self.test=get_ar_list(dataset,'test')
+            self.n_items=int(dataset['n_items'][0])
+
+        except:
+            self.train,self.val,self.test,self.n_items=self._create_dataset()
+            np.savez(tmp_path, 
+                     train_hist=self.train[0],
+                     train_pos_id=self.train[1],
+                     train_neg_id=self.train[2],
+                     val_hist=self.val[0],
+                     val_pos_id=self.val[1],
+                     val_neg_id=self.val[2],
+                     test_hist=self.test[0],
+                     test_pos_id=self.test[1],
+                     test_neg_id=self.test[2],
+                     n_items=np.array([self.n_items]))
+            print('create the dataset in path: ', tmp_path)
+        return
+
+    # 创造数据集
+    def _create_dataset(self,max_len=50,test_neg_num=99):
+        t0=time()
+        train_df=pd.read_csv(self.train_file)
+        test_df=pd.read_csv(self.test_file)
+        n_items=max(train_df['item'].max(),test_df['item'].max())+1
+        self.n_items=n_items
+        # 获取test pos id
+        test_user_dict=dict(zip(test_df['user'],test_df['item']))
+
+        train_data,val_data,test_data=defaultdict(list),defaultdict(list),defaultdict(list)
+        for user_id,df in train_df[['user','item']].groupby('user'):
+            pos_list=df['item'].tolist()
+            neg_list=[self.gen_neg(pos_list+[test_user_dict[user_id]]) for _ in range(len(pos_list)-1+test_neg_num)]
+            # [.....val_id]
+            for i in range(1,len(pos_list)):
+                if(i==len(pos_list)-1):
+                    val_data['hist'].append(pos_list[:i])
+                    val_data['pos_id'].append(pos_list[i])
+                    val_data['neg_id'].append(neg_list[i-1])
+                else:
+                    train_data['hist'].append(pos_list[:i])
+                    train_data['pos_id'].append(pos_list[i])
+                    train_data['neg_id'].append(neg_list[i-1])
+            # test data
+            test_data['hist'].append(pos_list)
+            test_data['pos_id'].append(test_user_dict[user_id])
+            test_data['neg_id'].append(neg_list[len(pos_list)-1:])
+
+        # 按照maxlen进行pad
+        train = [pad_sequences(train_data['hist'], maxlen=max_len,value=n_items), 
+                      np.array(train_data['pos_id']).reshape((-1,1)),
+                      np.array(train_data['neg_id']).reshape((-1,1))]
+
+        val = [pad_sequences(val_data['hist'], maxlen=max_len,value=n_items), 
+                    np.array(val_data['pos_id']).reshape((-1,1)),
+                    np.array(val_data['neg_id']).reshape((-1,1))]
+
+        test = [pad_sequences(test_data['hist'], maxlen=max_len,value=n_items),
+                    np.array(test_data['pos_id']).reshape((-1,1)),
+                    np.array(test_data['neg_id']).reshape((-1,test_neg_num))]
+        t1=time()
+        print('creat dataset cost:[{:.1f}s]'.format(t1-t0))
+        return train,val,test,n_items
 
     # 生成训练batch
-    def generate_train_cf_batch(self,idx):
+    def generate_train_batch(self,idx):
         #batch_num=self.train_df//self.batch_size
         if(idx==0):
             # 1 负采样
-            self.df_copy=self.train_df[['user','item']]
-            self.df_copy['neg_item']=self._sample()
+            #self.df_copy=self.train_df[['user','item']]
+            #self.df_copy['neg_item']=self._sample()
             # 2 打乱数据
-            self.df_copy=self.df_copy.sample(frac=1.0)
-            #self.df_copy.to_csv(self.path+'sample.csv',index=False)
+            state = np.random.get_state()
+            for ar in self.train:
+                np.random.set_state(state)
+                np.random.shuffle(ar)
 
         # 3 生成batch数据
         start=idx*self.batch_size
         end=(idx+1)*self.batch_size
-        end=end if end<self.n_train else self.n_train
+        end=end if end<self.train[0].shape[0] else self.train[0].shape[0]
         batch_data={
-            'user':self.df_copy['user'][start:end].values,
-            'pos_item':self.df_copy['item'][start:end].values,
-            'neg_item':self.df_copy['neg_item'][start:end].values,
+            'hist':self.train[0][start:end],
+            'pos_id':self.train[1][start:end],
+            'neg_id':self.train[2][start:end],
         }
 
         #return self.df_copy[start:end].values
@@ -114,26 +132,28 @@ class Data(object):
     # 生成batch的feed_dict字典
     def generate_train_feed_dict(self,model,batch_data):
         feed_dict={
-            model.users:batch_data['user'],
-            model.pos_items:batch_data['pos_item'],
-            model.neg_items:batch_data['neg_item']
+            model.hist:batch_data['hist'],
+            model.pos_items:batch_data['pos_id'],
+            model.neg_items:batch_data['neg_id']
         }
         
         return feed_dict
 
-    # 根据uid_list和iid_list生成batch_data [进行预测score_ui时用；还有获取评价指标时使用]
-    def generate_predict_cf_batch(self,uid_list,iid_list):
-        batch_data={
-            'user':uid_list,
-            'pos_item':iid_list,
-        }
-        return batch_data
-
-    # 生成预测batch的feed_dict字典
-    def generate_predict_feed_dict(self,model,batch_data):
+    # 生成test的feed_dict字典
+    def generate_test_feed_dict(self,model):
         feed_dict={
-            model.users:batch_data['user'],
-            model.pos_items:batch_data['pos_item'],
+            model.hist:self.test[0],
+            model.pos_items:np.concatenate((self.test[1],self.test[2]),axis=1)
         }
         
         return feed_dict
+    
+    # 统计训练集、验证集、测试集的数据量
+    def print_data_info(self):
+        print('train size:{}'.format(self.train[0].shape))
+        print('val size:{}'.format(self.val[0].shape))
+        print('test size:{}'.format(self.test[0].shape))
+
+#x=[1]
+#x=np.array(x)
+#print(type(x[0]))

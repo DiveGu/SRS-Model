@@ -13,65 +13,28 @@ def parse_args():
     parser.add_argument('--proj_path', nargs='?', default='F:/data/experiment_output/',
                         help='Project path.')
     # 数据集 数据处理参数
-    parser.add_argument('--dataset', nargs='?', default='lastfm',
+    parser.add_argument('--dataset', nargs='?', default='ml-1m',
                         help='Choose a dataset from {lastfm,ml-1m,gowalla, yelp2018, amazon-book}')
 
     parser.add_argument('--prepro',nargs='?',default='5-core',
                         help='Choose data preprocess from {orgin,x-filter,x-core}')
 
-    parser.add_argument('--test_method',nargs='?',default='ufo',
+    parser.add_argument('--test_method',nargs='?',default='tloo',
                         help='Choose a way to get test dataset from {fo,ufo, loo, tloo, tfo}')
+
+    parser.add_argument('--max_len',type=int,default=50,
+                        help='user behavior max length')
+
+    parser.add_argument('--test_neg_num',type=int,default=99,
+                        help='the neg num when evaluate test performence')
+
     # 模型参数
-    parser.add_argument('--model_type',nargs='?',default='bprmf',
-                        help='Choose a model from {bprmf,neumf,DisenMF,LightGCN,NAIS,DGCF,GNUD}.')
+    parser.add_argument('--model_type',nargs='?',default='SASRec',
+                        help='Choose a model from {SASRec}.')
     parser.add_argument('--model_des',nargs='?',default='train_test',
                         help='record something')
 
 
-    ## NeuMF 参数
-    #parser.add_argument('--layers', nargs='?', default='[40,20]',
-    #                    help='MLP sizes.')
-    ## ---------------------------------------------------------
-
-    ## DisenMF 参数
-    #parser.add_argument('--factor_num', type=int,default=4,
-    #                    help='factor num.')
-    #parser.add_argument('--factor_dim', type=int,default=5,
-    #                    help='factor num.')
-    #parser.add_argument('--factor_class_layers', nargs='?', default='[5,5]',
-    #                    help='factor class layers.')
-    ## ---------------------------------------------------------
-
-    ## LightGCN参数
-    #parser.add_argument('--layers', nargs='?', default='[40,20]',
-    #                    help='MLP sizes in NGCF.')
-    #parser.add_argument('--layer_num', type=int,default=2,
-    #                    help='layer_num in GCN.')
-    # ---------------------------------------------------------
-    
-    ## DGCF参数
-    parser.add_argument('--n_iteration', type=int,default=2,
-                        help='iteration_num in dynamic_routing.')
-    parser.add_argument('--layer_num', type=int,default=1,
-                        help='layer_num in DGCF.')
-    parser.add_argument('--factor_num', type=int,default=4,
-                        help='factor num.')
-    #parser.add_argument('--factor_dim', type=int,default=5,
-    #                    help='factor num.')
-    # ---------------------------------------------------------
-
-    # GNUD参数
-    #parser.add_argument('--n_iteration', type=int,default=1,
-    #                    help='iteration_num in dynamic_routing.')
-    #parser.add_argument('--layer_num', type=int,default=1,
-    #                    help='layer_num in GNUD.')
-    #parser.add_argument('--factor_num', type=int,default=4,
-    #                    help='factor num.')
-    #parser.add_argument('--factor_dim', type=int,default=5,
-    #                    help='factor num.')
-    #parser.add_argument('--factor_class_layers', nargs='?', default='[5]',
-    #                    help='factor class layers.')
-    # ---------------------------------------------------------
 
     parser.add_argument('--embed_size',type=int,default=20,
                         help='CF embedding size')
@@ -81,7 +44,7 @@ def parse_args():
                         help='Learning rate.')
     parser.add_argument('--batch_size', type=int, default=256,
                         help='CF batch size.')
-    parser.add_argument('--epoch', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='Epoch number.')
 
     parser.add_argument('--verbose', type=int, default=10,
@@ -104,8 +67,8 @@ def parse_args():
     parser.add_argument('--Ks', nargs='?', default='[1,5,10,20,50]',
                         help='top K.')
     parser.add_argument('--best_k_idx', type=int, default=2,
-                        help='best recall k idx in Ks')
-    parser.add_argument('--test_flag', nargs='?', default='all',
+                        help='best hit k idx in Ks')
+    parser.add_argument('--test_flag', nargs='?', default='part',
                         help='test rs part or all.')
 
 
