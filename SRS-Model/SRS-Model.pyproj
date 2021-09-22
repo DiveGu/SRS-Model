@@ -35,6 +35,9 @@
     <Compile Include="utils\load_data.py" />
     <Compile Include="utils\load_data_history.py" />
     <Compile Include="utils\metrics.py" />
+    <Compile Include="utils\modules.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="utils\parser.py" />
     <Compile Include="utils\splitter.py" />
   </ItemGroup>
