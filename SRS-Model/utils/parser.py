@@ -33,14 +33,15 @@ def parse_args():
                         help='Choose a model from {SASRec}.')
     parser.add_argument('--model_des',nargs='?',default='train_test',
                         help='record something')
-
+    parser.add_argument('--block_num',type=int,default=2,
+                        help='the block num')
 
 
     parser.add_argument('--embed_size',type=int,default=20,
                         help='CF embedding size')
     parser.add_argument('--regs', nargs='?', default='[1e-5,1e-5,1e-6]',
                         help='Regularization.')
-    parser.add_argument('--lr', type=float, default=1e-3,
+    parser.add_argument('--lr', type=float, default=1e-2,
                         help='Learning rate.')
     parser.add_argument('--batch_size', type=int, default=256,
                         help='CF batch size.')
