@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument('--test_method',nargs='?',default='tloo',
                         help='Choose a way to get test dataset from {fo,ufo, loo, tloo, tfo}')
 
-    parser.add_argument('--max_len',type=int,default=50,
+    parser.add_argument('--max_len',type=int,default=200,
                         help='user behavior max length')
 
     parser.add_argument('--test_neg_num',type=int,default=99,
@@ -35,17 +35,20 @@ def parse_args():
                         help='record something')
     parser.add_argument('--block_num',type=int,default=2,
                         help='the block num')
-
+    parser.add_argument('--head_num',type=int,default=2,
+                        help='the head num')
 
     parser.add_argument('--embed_size',type=int,default=20,
                         help='CF embedding size')
     parser.add_argument('--regs', nargs='?', default='[1e-5,1e-5,1e-6]',
                         help='Regularization.')
-    parser.add_argument('--lr', type=float, default=1e-2,
+    parser.add_argument('--lr', type=float, default=1e-3,
                         help='Learning rate.')
-    parser.add_argument('--batch_size', type=int, default=256,
+    parser.add_argument('--batch_size', type=int, default=512,
                         help='CF batch size.')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--drop_rate', type=float, default=0.5,
+                        help='Dropout rate.')
+    parser.add_argument('--epochs', type=int, default=30,
                         help='Epoch number.')
 
     parser.add_argument('--verbose', type=int, default=10,

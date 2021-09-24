@@ -293,56 +293,68 @@ from utils.parser import parse_args
 #print (ret)  
 
 
-# 测试tf.SpareTensor
+# 测试 X[:,1,:]的维度会不会变化
+# 结果：如果是X[:,1,:] 中间维度会消失 相当于取某一维度的值 
+# 如果是X[:,1:2,:] 中间维度不会消失 相当于取某一维度中的某几块
+#import tensorflow.compat.v1 as tf
+#X=np.arange(1,121).reshape((3,4,10))
+#print(X.shape)
+## [3,4,10]
+
+#X=tf.cast(X,tf.float32)
+
+
+#with tf.Session() as sess:
+#    ret = sess.run(X[:,-1,:])
+
+#print (ret)  
+#print(ret.shape) # [3,10]
+
+#with tf.Session() as sess:
+#    ret = sess.run(X[:,-1:,:])
+
+#print (ret)  
+#print(ret.shape) # [3,1,10]
+
+# 测试 自定义函数 tensor做参数 是值传递还是地址传递
+# 结果：值传递 函数中对参数的修改不会影响其原有值
+#import tensorflow.compat.v1 as tf
+
+#X=np.arange(1,13).reshape((3,4))
+#X=tf.cast(X,tf.float32)
+
+#def X_add_1(x):
+#    x=x+1
+#    return x
+
+#Y=X_add_1(X)
+
+#with tf.Session() as sess:
+#    ret = sess.run(Y)
+
+#print(ret)
+
+#with tf.Session() as sess:
+#    ret = sess.run(X)
+
+#print(ret)
+
+
+# 测试 [N,5,10]+[5,10] 如何计算
+# 结果对于N的每一条数据 都进行 [5,10]+[5,10]的运算
 import tensorflow.compat.v1 as tf
-# 5条边 [4,4]的形状 6个factor
-A_indices=[
-    [0,0],
-    [0,2],
-    [1,2],
-    [2,1],
-    [2,2]
-    ]
-D_indices=[
-    [0,1,2,3],
-    [0,1,2,3],
-    ]
-D_indices=np.mat(D_indices).transpose()
 
-A_factor_values=tf.ones(shape=[6,5])
-A_factor_scores=tf.nn.softmax(A_factor_values,axis=0)
-
-for i in range(0, 6):
-    # 【2-1】:提取factor i 对应的score行 并转化为稀疏tensor
-    A_i_scores = A_factor_scores[i] # 1维 [Edge]
-    print('一个factor所有边的A score:{}'.format(A_i_scores.shape))
-    # [Edge,2] [Edge] () -> tensor [U+I,U+I]
-    A_i_tensor = tf.SparseTensor(A_indices, A_i_scores, [4,4])
-    print('一个factor所有边的A score 稀疏tensor:{}'.format(A_i_tensor.shape))
-
-    # 【2-2】:计算每个factor下的拉普拉斯矩阵
-    # 计算当前factor i的score的度（准确的说，是sum A value）
-    # 分别是：求每一行的和 求每一列的和
-    D_i_col_scores_sum = tf.sparse_reduce_sum(A_i_tensor, axis=1,keepdims=False)
-    print('D_i_col_scores_sum:{}'.format(D_i_col_scores_sum.shape))
-    D_i_col_scores = 1/tf.math.sqrt(D_i_col_scores_sum) # [U+I,]
-    print('D_i_col_scores:{}'.format(D_i_col_scores.shape))
-         
-    # 【2-3】:重新修正两个Laplace 稀疏tensor 的形状
-    D_i_col_tensor = tf.SparseTensor(D_indices, D_i_col_scores, [4,4]) # [U+I,U+I]
-    print('D_i_col_tensor:{}'.format(D_i_col_tensor.shape))
-
-    break
-
+# 5样本 len=2 k=3
+X=np.arange(1,31).reshape((5,2,3))
+X=tf.cast(X,tf.float32)
+Y=tf.ones(shape=[2,3])
+print(X.shape)
+print(Y.shape)
+Z=X+Y
 
 with tf.Session() as sess:
-    ret_lst = sess.run([A_i_scores,A_i_tensor,D_i_col_scores_sum,D_i_col_scores,D_i_col_tensor])
- 
-for ret in ret_lst:
-    print('****************************')
-    print(ret)
+    ret = sess.run(Z)
 
-
-
+print(ret)
 
 

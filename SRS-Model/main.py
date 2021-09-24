@@ -52,7 +52,7 @@ def main():
         batch_num=args.epochs//args.batch_size if args.epochs%args.batch_size==0 else args.epochs//args.batch_size+1
         for batch_idx in range(batch_num):
             batch_feed_data=data_generator.generate_train_batch(batch_idx)
-            batch_feed_dict=data_generator.generate_train_feed_dict(model,batch_feed_data)
+            batch_feed_dict=data_generator.generate_train_feed_dict(model,batch_feed_data,args.drop_rate)
             _,batch_loss=model.train(sess,batch_feed_dict)
             loss+=batch_loss
 

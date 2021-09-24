@@ -59,7 +59,7 @@ class Data_Sequence():
         return
 
     # 创造数据集
-    def _create_dataset(self,max_len=50,test_neg_num=99):
+    def _create_dataset(self,max_len=200,test_neg_num=99):
         t0=time()
         train_df=pd.read_csv(self.train_file)
         test_df=pd.read_csv(self.test_file)
@@ -130,11 +130,12 @@ class Data_Sequence():
         return batch_data 
 
     # 生成batch的feed_dict字典
-    def generate_train_feed_dict(self,model,batch_data):
+    def generate_train_feed_dict(self,model,batch_data,drop_rate):
         feed_dict={
             model.hist:batch_data['hist'],
             model.pos_items:batch_data['pos_id'],
-            model.neg_items:batch_data['neg_id']
+            model.neg_items:batch_data['neg_id'],
+            model.drop_rate:drop_rate,
         }
         
         return feed_dict
@@ -143,7 +144,8 @@ class Data_Sequence():
     def generate_test_feed_dict(self,model):
         feed_dict={
             model.hist:self.test[0],
-            model.pos_items:np.concatenate((self.test[1],self.test[2]),axis=1)
+            model.pos_items:np.concatenate((self.test[1],self.test[2]),axis=1),
+            model.drop_rate:0.,
         }
         
         return feed_dict

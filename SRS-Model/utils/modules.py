@@ -10,8 +10,9 @@ def self_attention(Q,K,V,mask,future_mask_flag=True):
     V:[N,seq_len,d]
     mask:[N,seq_len,seq_len] item id的mask，即pad id对应的mask为0
     """
-    #d=K.get_shape().as_list()[-1]
-    d=tf.cast(K.shape(-1),tf.float32)
+    d=K.get_shape().as_list()[-1]
+    #d=tf.cast(K.shape()[-1],tf.float32) # 错误使用
+    #d=tf.cast(tf.shape(K)[-1],tf.float32)
     outputs=tf.matmul(Q,tf.transpose(K,perm=[0,2,1]))/(d**0.5) # [N,seq_len,d] [N,d,seq_len] -> [N,seq_len,seq_len]
     # mask[i,j]的s[i,j]为很小的负数 经过softmax s[i,j]=0 
     paddings=tf.ones_like(outputs)*(-2**32+1) # [N,seq_len,seq_len]
@@ -31,3 +32,10 @@ def self_attention(Q,K,V,mask,future_mask_flag=True):
 
     return outputs
 
+
+def multi_head_self_attention(Q_list,K_list,V_list,mask,future_mask_flag=True):
+    outputs=[]
+    for i in range(len(Q_list)):
+        outputs.append(self_attention(Q_list[i],K_list[i],V_list[i],mask,future_mask_flag))
+    # head_num个 [N,seq_len,d//head_num]
+    return tf.concat(outputs,axis=2) # [N,seq_len,d]
