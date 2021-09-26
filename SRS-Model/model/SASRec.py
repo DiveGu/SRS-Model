@@ -57,9 +57,12 @@ class SASRec():
         # 1 得到序列的表示
         his_embeddings=tf.nn.embedding_lookup(self.weights['item_embedding'],self.hist) # [N,max_len,k]
         his_embeddings=his_embeddings+self.weights['position_embedding'] # [N,max_len,k]+[max_len,k]
-        # pad iid=n_items mask为pad的mask
-        mask=tf.cast(tf.equal(self.hist,self.n_items),tf.float32) # [N,max_len]
+        # pad iid=n_items mask为pad的mask 也就是 pad对应为0 其他item对应为1
+        mask=tf.cast(tf.not_equal(self.hist,self.n_items),tf.float32) # [N,max_len]
+        # bug！！ mask矩阵中，pad_id应该为0，但是按照bug写法是pad_id为1，真正的item为0
+        #mask=tf.cast(tf.equal(self.hist,self.n_items),tf.float32) # [N,max_len]
         mask=tf.expand_dims(mask,axis=2) # [N,max_len,1]
+        his_embeddings=tf.multiply(his_embeddings,mask) # [N,max_len,k] 把pad位置的嵌入置为0
         mask=tf.matmul(mask,tf.transpose(mask,perm=[0,2,1])) # [N,max_len,1] [N,1,max_len]-> [N,max_len,max_len]
         his_represention=self._bulid_his_represention(his_embeddings,mask)
         # 2 得到pos和neg的target表示
@@ -70,10 +73,13 @@ class SASRec():
         neg_preidct_scores=tf.nn.sigmoid(self._get_predict_score(his_represention,target_neg_embeddings)) # [N,4,k]
         self.batch_ratings=pos_preidct_scores
         # 4 构造损失函数
-        neg_num=tf.dtypes.cast(tf.shape(neg_preidct_scores)[1], tf.int32)
-        cf_loss_list=[-tf.math.log(pos_preidct_scores),-tf.math.log(1-neg_preidct_scores)]
+        #neg_num=tf.dtypes.cast(tf.shape(neg_preidct_scores)[1], tf.int32)
+        cf_loss_list=[-tf.math.log(pos_preidct_scores+1e-24),-tf.math.log(1-neg_preidct_scores+1e-24)]
         cf_loss=tf.reduce_mean(tf.concat(cf_loss_list,axis=1))
-        self.loss=cf_loss
+        reg_loss=tf.nn.l2_loss(his_embeddings)+tf.nn.l2_loss(target_pos_embeddings)+tf.nn.l2_loss(target_neg_embeddings)
+        reg_loss=reg_loss*self.regs[0]
+
+        self.loss=cf_loss+reg_loss
         # 5 优化
         self.opt=tf.train.AdamOptimizer(learning_rate=self.lr).minimize(self.loss)
 
@@ -103,10 +109,14 @@ class SASRec():
         K_list=[tf.matmul(inputs_lnorm,W_k_list[k]) for k in range(self.head_num)] # [N,max_len,k]
         V_list=[tf.matmul(inputs_lnorm,W_v_list[k]) for k in range(self.head_num)] # [N,max_len,k]
 
-        outputs=tf.nn.dropout(multi_head_self_attention(Q_list,K_list,V_list,mask),rate=self.drop_rate) # [N,max_len,k]
+        if(self.head_num==1):
+            outputs=tf.nn.dropout(self_attention(Q_list[0],K_list[0],V_list[0],mask),rate=self.drop_rate) # [N,max_len,k]
         # 多头的话 需要线性转化成最终的输出
-        if(self.head_num>1):
+        else:
+            outputs=multi_head_self_attention(Q_list,K_list,V_list,mask)
             outputs=tf.matmul(outputs,self.weights['W_sub_2_out']) # [N,max_len,head_num*head_dim] [head_num*head_dim,k] -> [N,max_len,k]
+            outputs=tf.nn.dropout(outputs,rate=self.drop_rate)
+        
         outputs=inputs+outputs
 
         # step 2：FFN层 
@@ -119,21 +129,39 @@ class SASRec():
     # Self Attention之后的FFN
     def _ffn(self,inputs):
         outputs=inputs
-        outputs=tf.layers.dense(outputs,
-                                self.emb_dim,
-                                use_bias=True,
-                                activation='relu',
-                                name="FFN_1",
-                                reuse=tf.AUTO_REUSE,
-                                )
-        outputs=tf.layers.dense(outputs,
-                                self.emb_dim,
-                                use_bias=True,
-                                activation=None,
-                                name="FFN_2",
-                                reuse=tf.AUTO_REUSE,
-                                )
+        #outputs=tf.layers.dense(outputs,
+        #                        self.emb_dim,
+        #                        use_bias=True,
+        #                        activation='relu',
+        #                        name="FFN_1",
+        #                        reuse=tf.AUTO_REUSE,
+        #                        )
+        #outputs=tf.layers.dense(outputs,
+        #                        self.emb_dim,
+        #                        use_bias=True,
+        #                        activation=None,
+        #                        name="FFN_2",
+        #                        reuse=tf.AUTO_REUSE,
+        #                        )
+        #print(outputs.shape)
+        outputs=tf.layers.conv1d(outputs,
+                                 filters=1024, 
+                                 kernel_size=1, 
+                                 activation='relu', 
+                                 use_bias=True,
+                                 name="FFN_1",
+                                 reuse=tf.AUTO_REUSE,)
+
+        outputs=tf.layers.conv1d(outputs,
+                                 filters=self.emb_dim, 
+                                 kernel_size=1, 
+                                 activation=None, 
+                                 use_bias=True,
+                                 name="FFN_2",
+                                 reuse=tf.AUTO_REUSE,)
+
         return outputs
+
 
     # 根据hist表示和target表示预测评分
     def _get_predict_score(self,hist_e,target_e):

@@ -38,17 +38,17 @@ def parse_args():
     parser.add_argument('--head_num',type=int,default=2,
                         help='the head num')
 
-    parser.add_argument('--embed_size',type=int,default=20,
+    parser.add_argument('--embed_size',type=int,default=50,
                         help='CF embedding size')
-    parser.add_argument('--regs', nargs='?', default='[1e-5,1e-5,1e-6]',
+    parser.add_argument('--regs', nargs='?', default='[0,1e-5,1e-6]',
                         help='Regularization.')
-    parser.add_argument('--lr', type=float, default=1e-3,
+    parser.add_argument('--lr', type=float, default=1e-2,
                         help='Learning rate.')
-    parser.add_argument('--batch_size', type=int, default=512,
+    parser.add_argument('--batch_size', type=int, default=256,
                         help='CF batch size.')
     parser.add_argument('--drop_rate', type=float, default=0.5,
                         help='Dropout rate.')
-    parser.add_argument('--epochs', type=int, default=30,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='Epoch number.')
 
     parser.add_argument('--verbose', type=int, default=10,

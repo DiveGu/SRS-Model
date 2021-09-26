@@ -42,6 +42,10 @@ class Data_Sequence():
             self.test=get_ar_list(dataset,'test')
             self.n_items=int(dataset['n_items'][0])
 
+            # train+val
+            for i in range(len(self.train)):
+                self.train[i]=np.concatenate((self.train[i],self.val[i]),axis=0)
+
         except:
             self.train,self.val,self.test,self.n_items=self._create_dataset()
             np.savez(tmp_path, 
