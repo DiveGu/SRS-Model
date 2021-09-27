@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>9920e6ed-7ae5-422a-8252-f68705f58802</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>main.py</StartupFile>
+    <StartupFile>model\PopRec.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -24,6 +24,9 @@
     <Compile Include="main.py" />
     <Compile Include="model\BPRMF.py" />
     <Compile Include="model\DGCF.py" />
+    <Compile Include="model\PopRec.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="model\SASRec.py">
       <SubType>Code</SubType>
     </Compile>

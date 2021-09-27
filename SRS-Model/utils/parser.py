@@ -22,10 +22,13 @@ def parse_args():
     parser.add_argument('--test_method',nargs='?',default='tloo',
                         help='Choose a way to get test dataset from {fo,ufo, loo, tloo, tfo}')
 
-    parser.add_argument('--max_len',type=int,default=200,
+    parser.add_argument('--max_len',type=int,default=50,
                         help='user behavior max length')
 
-    parser.add_argument('--test_neg_num',type=int,default=99,
+    parser.add_argument('--train_neg_num',type=int,default=1,
+                        help='the neg num when train pos num=1')
+
+    parser.add_argument('--test_neg_num',type=int,default=100,
                         help='the neg num when evaluate test performence')
 
     # 模型参数
@@ -42,7 +45,7 @@ def parse_args():
                         help='CF embedding size')
     parser.add_argument('--regs', nargs='?', default='[0,1e-5,1e-6]',
                         help='Regularization.')
-    parser.add_argument('--lr', type=float, default=1e-2,
+    parser.add_argument('--lr', type=float, default=1e-3,
                         help='Learning rate.')
     parser.add_argument('--batch_size', type=int, default=256,
                         help='CF batch size.')

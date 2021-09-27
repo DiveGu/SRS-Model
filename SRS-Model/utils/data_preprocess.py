@@ -41,15 +41,15 @@ def generate_experiment_data():
     #train_set.to_csv(f'{experiment_data_path}/train_{args.dataset}_{args.prepro}_{args.test_method}.csv', index=False)
     #test_set.to_csv(f'{experiment_data_path}/test_{args.dataset}_{args.prepro}_{args.test_method}.csv', index=False)
     
-    # 2 为test中用户采样到1000样本（评价指标排序类）
-    train_ur=get_ur(train_set)
-    test_ur=get_ur(test_set)
-    test_candidate_neg=build_candidates_set(test_ur, train_ur, set(range(len(iid_2_origin))), candidates_num=100)
-    # 保存test的负采样
-    f = open(f'{experiment_data_path}test_neg.txt','w')
-    f.write(json.dumps(test_candidate_neg))
-    #f.write(str(test_candidate_neg))
-    f.close()
+    ## 2 为test中用户采样到1000样本（评价指标排序类）
+    #train_ur=get_ur(train_set)
+    #test_ur=get_ur(test_set)
+    #test_candidate_neg=build_candidates_set(test_ur, train_ur, set(range(len(iid_2_origin))), candidates_num=100)
+    ## 保存test的负采样
+    #f = open(f'{experiment_data_path}test_neg.txt','w')
+    #f.write(json.dumps(test_candidate_neg))
+    ##f.write(str(test_candidate_neg))
+    #f.close()
 
     print('Finish save train and test set...')
     del train_set, test_set, df

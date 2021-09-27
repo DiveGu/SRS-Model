@@ -46,10 +46,26 @@ class SASRec():
         # W_q_list_i 第i层block的W_Q列表 元素长度为head_num
         for i in range(self.block_num):
             all_weights['W_q_list_{}'.format(i)]=[tf.Variable(initializer([self.emb_dim,self.head_dim]),name='W_q_{}_{}'.format(i,k)) for k in range(self.head_num)]
-            all_weights['W_k_list_{}'.format(i)]=[tf.Variable(initializer([self.emb_dim,self.head_dim]),name='W_q_{}_{}'.format(i,k)) for k in range(self.head_num)]
-            all_weights['W_v_list_{}'.format(i)]=[tf.Variable(initializer([self.emb_dim,self.head_dim]),name='W_q_{}_{}'.format(i,k)) for k in range(self.head_num)]
+            all_weights['W_k_list_{}'.format(i)]=[tf.Variable(initializer([self.emb_dim,self.head_dim]),name='W_k_{}_{}'.format(i,k)) for k in range(self.head_num)]
+            all_weights['W_v_list_{}'.format(i)]=[tf.Variable(initializer([self.emb_dim,self.head_dim]),name='W_v_{}_{}'.format(i,k)) for k in range(self.head_num)]
         # W_o 多头concat之后线性转化矩阵
         all_weights['W_sub_2_out']=tf.Variable(initializer([self.head_num*self.head_dim,self.emb_dim]),name='W_sub_2_out')
+        
+        ## W_q_list_i 第i层block的W_Q列表 元素长度为head_num
+        #for i in range(self.block_num):
+        #    all_weights['W_q_list_{}'.format(i)]=[tf.get_variable(shape=[self.emb_dim,self.head_dim],name='W_q_{}_{}'.format(i,k),
+        #                                                         initializer=tf.random_normal_initializer(mean=0, stddev=0.1, seed=2021))
+        #                                          for k in range(self.head_num)]
+        #    all_weights['W_k_list_{}'.format(i)]=[tf.get_variable(shape=[self.emb_dim,self.head_dim],name='W_k_{}_{}'.format(i,k),
+        #                                                         initializer=tf.random_normal_initializer(mean=0, stddev=0.1, seed=2021))
+        #                                          for k in range(self.head_num)]
+        #    all_weights['W_v_list_{}'.format(i)]=[tf.get_variable(shape=[self.emb_dim,self.head_dim],name='W_v_{}_{}'.format(i,k),
+        #                                                         initializer=tf.random_normal_initializer(mean=0, stddev=0.1, seed=2021))
+        #                                          for k in range(self.head_num)]
+        ## W_o 多头concat之后线性转化矩阵
+        #all_weights['W_sub_2_out']=tf.get_variable(shape=[self.head_num*self.head_dim,self.emb_dim],name='W_sub_2_out',
+        #                                           initializer=tf.random_normal_initializer(mean=0, stddev=1, seed=2021))
+
         return all_weights
 
     # 构造模型
@@ -69,8 +85,8 @@ class SASRec():
         target_pos_embeddings=tf.nn.embedding_lookup(self.weights['item_embedding'],self.pos_items) # [N,1,k]
         target_neg_embeddings=tf.nn.embedding_lookup(self.weights['item_embedding'],self.neg_items) # [N,4,k]
         # 3 得到预测评分
-        pos_preidct_scores=tf.nn.sigmoid(self._get_predict_score(his_represention,target_pos_embeddings)) # [N,1,k]
-        neg_preidct_scores=tf.nn.sigmoid(self._get_predict_score(his_represention,target_neg_embeddings)) # [N,4,k]
+        pos_preidct_scores=tf.nn.sigmoid(self._get_predict_score(his_represention,target_pos_embeddings)) # [N,1]
+        neg_preidct_scores=tf.nn.sigmoid(self._get_predict_score(his_represention,target_neg_embeddings)) # [N,4]
         self.batch_ratings=pos_preidct_scores
         # 4 构造损失函数
         #neg_num=tf.dtypes.cast(tf.shape(neg_preidct_scores)[1], tf.int32)
@@ -129,36 +145,38 @@ class SASRec():
     # Self Attention之后的FFN
     def _ffn(self,inputs):
         outputs=inputs
-        #outputs=tf.layers.dense(outputs,
-        #                        self.emb_dim,
-        #                        use_bias=True,
-        #                        activation='relu',
-        #                        name="FFN_1",
-        #                        reuse=tf.AUTO_REUSE,
-        #                        )
-        #outputs=tf.layers.dense(outputs,
-        #                        self.emb_dim,
-        #                        use_bias=True,
-        #                        activation=None,
-        #                        name="FFN_2",
-        #                        reuse=tf.AUTO_REUSE,
-        #                        )
+        outputs=tf.layers.dense(outputs,
+                                self.emb_dim,
+                                use_bias=True,
+                                activation='relu',
+                                #name="FFN_1",
+                                #reuse=tf.AUTO_REUSE,
+                                )
+        outputs=tf.layers.dense(outputs,
+                                self.emb_dim,
+                                use_bias=True,
+                                activation=None,
+                                #name="FFN_2",
+                                #reuse=tf.AUTO_REUSE,
+                                )
         #print(outputs.shape)
-        outputs=tf.layers.conv1d(outputs,
-                                 filters=1024, 
-                                 kernel_size=1, 
-                                 activation='relu', 
-                                 use_bias=True,
-                                 name="FFN_1",
-                                 reuse=tf.AUTO_REUSE,)
+        #outputs=tf.layers.conv1d(outputs,
+        #                         filters=1024, 
+        #                         kernel_size=1, 
+        #                         activation='relu', 
+        #                         use_bias=True,
+        #                         #name="FFN_1",
+        #                         #reuse=tf.AUTO_REUSE,
+        #                         )
 
-        outputs=tf.layers.conv1d(outputs,
-                                 filters=self.emb_dim, 
-                                 kernel_size=1, 
-                                 activation=None, 
-                                 use_bias=True,
-                                 name="FFN_2",
-                                 reuse=tf.AUTO_REUSE,)
+        #outputs=tf.layers.conv1d(outputs,
+        #                         filters=self.emb_dim, 
+        #                         kernel_size=1, 
+        #                         activation=None, 
+        #                         use_bias=True,
+        #                         #name="FFN_2",
+        #                         #reuse=tf.AUTO_REUSE,
+        #                         )
 
         return outputs
 

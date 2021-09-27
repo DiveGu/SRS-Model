@@ -13,13 +13,21 @@ from collections import defaultdict
 # 数据集准备
 class Data_Sequence():
 
-    def __init__(self, path, batch_size):
+    def __init__(self, path,batch_size,max_len,
+                 train_neg_num,test_neg_num):
+        """
+        train_neg_num：训练时每个正样本的负采样数量
+        test_neg_num：测试pos item时对比的neg items数量
+        """
         self.path = path
         self.batch_size = batch_size
 
         self.train_file = path + '/train.csv'
         self.test_file = path + '/test.csv'
-
+        
+        self.max_len=max_len
+        self.train_neg_num=train_neg_num
+        self.test_neg_num=test_neg_num
 
     # 负采样 从[0,n_items-1]采样出不在pos_list中的
     def gen_neg(self,pos_list):
@@ -28,10 +36,19 @@ class Data_Sequence():
             neg_id=random.randint(0,self.n_items-1)
         return neg_id
 
+    # 负采样 从[0,n_items-1]采样出neg_num个不在pos_list中的
+    def gen_neg_list(self,pos_list,neg_num):
+        neg_list=[]
+        for i in range(neg_num):
+            neg_id=self.gen_neg(pos_list+neg_list)
+            neg_list.append(neg_id)
+
+        return neg_list
+
 
     # 加载数据集
     def load_dataset(self):
-        tmp_path=self.path+'dataset.npz'
+        tmp_path='{}dataset-{}-{}-{}.npz'.format(self.path,self.max_len,self.train_neg_num,self.test_neg_num)
         try:
             dataset=np.load(tmp_path)
             def get_ar_list(dataset,name):
@@ -63,7 +80,7 @@ class Data_Sequence():
         return
 
     # 创造数据集
-    def _create_dataset(self,max_len=200,test_neg_num=99):
+    def _create_dataset(self):
         t0=time()
         train_df=pd.read_csv(self.train_file)
         test_df=pd.read_csv(self.test_file)
@@ -73,36 +90,52 @@ class Data_Sequence():
         test_user_dict=dict(zip(test_df['user'],test_df['item']))
 
         train_data,val_data,test_data=defaultdict(list),defaultdict(list),defaultdict(list)
-        for user_id,df in train_df[['user','item']].groupby('user'):
+        for user_id,df in train_df[['user','item','timestamp']].groupby('user'):
+            df=df.sort_values(['timestamp'],ascending=True).reset_index(drop=True) # 按照时间升序排列
+            ## just test
+            #if(user_id==0):
+            #    df.to_csv(self.path+'uid_0.csv')
+            #    print(df['item'].tolist())
+
             pos_list=df['item'].tolist()
-            neg_list=[self.gen_neg(pos_list+[test_user_dict[user_id]]) for _ in range(len(pos_list)-1+test_neg_num)]
-            # [.....val_id]
+
+            """
+            1 pos_list：时间升序排列的item序列 长度为len
+            2 pos_list[i]为正样本 pos_list[0:i]为hist序列
+            3 所以pos_list能生成 len-1 条样本
+            4 test还能生成 1 条样本
+            5 需要的负样本数量为 (len-1)*train_neg_num + test_neg_num
+            """
+            cur_user_neg_list=[self.gen_neg_list(pos_list+[test_user_dict[user_id]],self.train_neg_num) for _ in range(len(pos_list)-1)]
+            cur_user_neg_list.append(self.gen_neg_list(pos_list+[test_user_dict[user_id]],self.test_neg_num))
+            # i为正样本在序列中的idx
             for i in range(1,len(pos_list)):
                 if(i==len(pos_list)-1):
                     val_data['hist'].append(pos_list[:i])
                     val_data['pos_id'].append(pos_list[i])
-                    val_data['neg_id'].append(neg_list[i-1])
+                    val_data['neg_id'].append(cur_user_neg_list[i-1])
                 else:
                     train_data['hist'].append(pos_list[:i])
                     train_data['pos_id'].append(pos_list[i])
-                    train_data['neg_id'].append(neg_list[i-1])
+                    train_data['neg_id'].append(cur_user_neg_list[i-1])
             # test data
             test_data['hist'].append(pos_list)
             test_data['pos_id'].append(test_user_dict[user_id])
-            test_data['neg_id'].append(neg_list[len(pos_list)-1:])
+            test_data['neg_id'].append(cur_user_neg_list[len(pos_list)-1])
 
-        # 按照maxlen进行pad
-        train = [pad_sequences(train_data['hist'], maxlen=max_len,value=n_items), 
+
+        # 使用n_items作为pad id，按照maxlen进行pad
+        train = [pad_sequences(train_data['hist'], maxlen=self.max_len,value=n_items), 
                       np.array(train_data['pos_id']).reshape((-1,1)),
-                      np.array(train_data['neg_id']).reshape((-1,1))]
+                      np.array(train_data['neg_id']).reshape((-1,self.train_neg_num))]
 
-        val = [pad_sequences(val_data['hist'], maxlen=max_len,value=n_items), 
+        val = [pad_sequences(val_data['hist'], maxlen=self.max_len,value=n_items), 
                     np.array(val_data['pos_id']).reshape((-1,1)),
-                    np.array(val_data['neg_id']).reshape((-1,1))]
+                    np.array(val_data['neg_id']).reshape((-1,self.train_neg_num))]
 
-        test = [pad_sequences(test_data['hist'], maxlen=max_len,value=n_items),
+        test = [pad_sequences(test_data['hist'], maxlen=self.max_len,value=n_items),
                     np.array(test_data['pos_id']).reshape((-1,1)),
-                    np.array(test_data['neg_id']).reshape((-1,test_neg_num))]
+                    np.array(test_data['neg_id']).reshape((-1,self.test_neg_num))]
         t1=time()
         print('creat dataset cost:[{:.1f}s]'.format(t1-t0))
         return train,val,test,n_items
@@ -116,7 +149,8 @@ class Data_Sequence():
             #self.df_copy['neg_item']=self._sample()
             # 2 打乱数据
             state = np.random.get_state()
-            for ar in self.train:
+            np.random.shuffle(self.train[0])
+            for ar in self.train[1:]:
                 np.random.set_state(state)
                 np.random.shuffle(ar)
 
@@ -153,7 +187,13 @@ class Data_Sequence():
         }
         
         return feed_dict
-    
+
+    # 为PopRec生成预测list
+    def generate_pop_feed(self):
+        i_list=np.concatenate((self.test[1],self.test[2]),axis=1)    
+        return list(i_list)
+
+
     # 统计训练集、验证集、测试集的数据量
     def print_data_info(self):
         print('train size:{}'.format(self.train[0].shape))

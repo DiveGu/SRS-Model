@@ -28,7 +28,8 @@ def main():
     t0=time()
     args = parse_args()
     data_path='{}experiment_data/{}/{}_{}/'.format(args.data_path,args.dataset,args.prepro,args.test_method)
-    data_generator=Data_Sequence(data_path,args.batch_size)
+    data_generator=Data_Sequence(data_path,args.batch_size,args.max_len,
+                                 args.train_neg_num,args.test_neg_num)
     data_generator.load_dataset()
     data_generator.print_data_info()
     t1=time()
