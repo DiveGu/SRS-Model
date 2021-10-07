@@ -19,6 +19,7 @@ from utils.metrics import evaluate_performance
 from utils.load_data import Data_Sequence
 
 from model.SASRec import SASRec
+from model.GRU4Rec import GRU4Rec
 
 SEED=2021
 tf.set_random_seed(SEED)
@@ -37,7 +38,10 @@ def main():
     # =================2：构造模型=====================
     data_config=dict()
     data_config['n_items']=data_generator.n_items
-    model=SASRec(args,data_config)
+    if(args.model_type=='SASRec'):
+        model=SASRec(args,data_config)
+    elif(args.model_type=='GRU4Rec'):
+        model=GRU4Rec(args,data_config)
 
     # =================3：训练模型=====================
     config = tf.ConfigProto()

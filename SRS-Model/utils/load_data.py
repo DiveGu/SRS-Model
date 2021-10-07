@@ -153,6 +153,7 @@ class Data_Sequence():
             for ar in self.train[1:]:
                 np.random.set_state(state)
                 np.random.shuffle(ar)
+            x=1
 
         # 3 生成batch数据
         start=idx*self.batch_size
