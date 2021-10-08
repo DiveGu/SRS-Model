@@ -24,6 +24,9 @@
     <Compile Include="main.py" />
     <Compile Include="model\BPRMF.py" />
     <Compile Include="model\DGCF.py" />
+    <Compile Include="model\FPMC.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="model\GRU4Rec.py">
       <SubType>Code</SubType>
     </Compile>

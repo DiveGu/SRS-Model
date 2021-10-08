@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument('--test_method',nargs='?',default='tloo',
                         help='Choose a way to get test dataset from {fo,ufo, loo, tloo, tfo}')
 
-    parser.add_argument('--max_len',type=int,default=50,
+    parser.add_argument('--max_len',type=int,default=1,
                         help='user behavior max length')
 
     parser.add_argument('--train_neg_num',type=int,default=1,
@@ -32,15 +32,15 @@ def parse_args():
                         help='the neg num when evaluate test performence')
 
     # 模型参数
-    parser.add_argument('--model_type',nargs='?',default='GRU4Rec',
-                        help='Choose a model from {SASRec,GRU4Rec}.')
+    parser.add_argument('--model_type',nargs='?',default='FPMC',
+                        help='Choose a model from {SASRec,GRU4Rec,FPMC}.')
     parser.add_argument('--model_des',nargs='?',default='train_test',
                         help='record something')
 
     # SASRec参数
     parser.add_argument('--block_num',type=int,default=2,
                         help='the block num')
-    parser.add_argument('--head_num',type=int,default=2,
+    parser.add_argument('--head_num',type=int,default=1,
                         help='the head num')
 
     # GRU4Rec参数
@@ -51,7 +51,7 @@ def parse_args():
                         help='CF embedding size')
     parser.add_argument('--regs', nargs='?', default='[0,1e-5,1e-6]',
                         help='Regularization.')
-    parser.add_argument('--lr', type=float, default=1e-2,
+    parser.add_argument('--lr', type=float, default=1e-3,
                         help='Learning rate.')
     parser.add_argument('--batch_size', type=int, default=256,
                         help='CF batch size.')
