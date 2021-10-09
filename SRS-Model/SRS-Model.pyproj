@@ -57,11 +57,16 @@
     <Folder Include="utils\__pycache__\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="model\__pycache__\FPMC.cpython-37.pyc" />
+    <Content Include="model\__pycache__\GRU4Rec.cpython-37.pyc" />
     <Content Include="model\__pycache__\SASRec.cpython-37.pyc" />
     <Content Include="utils\__pycache__\helper.cpython-37.pyc" />
+    <Content Include="utils\__pycache__\loader_origin.cpython-37.pyc" />
     <Content Include="utils\__pycache__\load_data.cpython-37.pyc" />
     <Content Include="utils\__pycache__\metrics.cpython-37.pyc" />
+    <Content Include="utils\__pycache__\modules.cpython-37.pyc" />
     <Content Include="utils\__pycache__\parser.cpython-37.pyc" />
+    <Content Include="utils\__pycache__\splitter.cpython-37.pyc" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

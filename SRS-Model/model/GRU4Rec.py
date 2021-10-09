@@ -25,6 +25,7 @@ class GRU4Rec():
         self.regs=eval(args.regs)
 
         # 定义输入placeholder
+        self.users=tf.placeholder(tf.int32,shape=[None,None],name='users') # [N,1]
         self.hist=tf.placeholder(tf.int32,shape=[None,None],name='hist') # [N,max_len]
         self.pos_items=tf.placeholder(tf.int32,shape=[None,None],name='pos_items') # [N,1]
         self.neg_items=tf.placeholder(tf.int32,shape=[None,None],name='neg_items') # [N,1] or [N,4]

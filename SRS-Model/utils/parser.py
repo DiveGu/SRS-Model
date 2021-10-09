@@ -47,11 +47,11 @@ def parse_args():
     parser.add_argument('--gru_layers', nargs='?', default='[20,20]',
                         help='gru_layers.')
 
-    parser.add_argument('--embed_size',type=int,default=50,
+    parser.add_argument('--embed_size',type=int,default=20,
                         help='CF embedding size')
-    parser.add_argument('--regs', nargs='?', default='[0,1e-5,1e-6]',
+    parser.add_argument('--regs', nargs='?', default='[1e-5,1e-5,1e-6]',
                         help='Regularization.')
-    parser.add_argument('--lr', type=float, default=1e-3,
+    parser.add_argument('--lr', type=float, default=1e-2,
                         help='Learning rate.')
     parser.add_argument('--batch_size', type=int, default=256,
                         help='CF batch size.')

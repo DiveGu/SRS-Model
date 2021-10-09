@@ -75,12 +75,12 @@ class Data_Sequence():
                      val_hist=self.val[0],
                      val_pos_id=self.val[1],
                      val_neg_id=self.val[2],
-                     val_uid=self.train[3],
+                     val_uid=self.val[3],
 
                      test_hist=self.test[0],
                      test_pos_id=self.test[1],
                      test_neg_id=self.test[2],
-                     test_uid=self.train[3],
+                     test_uid=self.test[3],
 
                      n_items=np.array([self.n_items]),
                      n_users=np.array([self.n_users]),
@@ -121,17 +121,17 @@ class Data_Sequence():
             # i为正样本在序列中的idx
             for i in range(1,len(pos_list)):
                 if(i==len(pos_list)-1):
-                    val_data['user_id'].append(user_id)
+                    val_data['uid'].append(user_id)
                     val_data['hist'].append(pos_list[:i])
                     val_data['pos_id'].append(pos_list[i])
                     val_data['neg_id'].append(cur_user_neg_list[i-1])
                 else:
-                    train_data['user_id'].append(user_id)
+                    train_data['uid'].append(user_id)
                     train_data['hist'].append(pos_list[:i])
                     train_data['pos_id'].append(pos_list[i])
                     train_data['neg_id'].append(cur_user_neg_list[i-1])
             # test data
-            test_data['user_id'].append(user_id)
+            test_data['uid'].append(user_id)
             test_data['hist'].append(pos_list)
             test_data['pos_id'].append(test_user_dict[user_id])
             test_data['neg_id'].append(cur_user_neg_list[len(pos_list)-1])
@@ -141,17 +141,17 @@ class Data_Sequence():
         train = [pad_sequences(train_data['hist'], maxlen=self.max_len,value=n_items), 
                  np.array(train_data['pos_id']).reshape((-1,1)),
                  np.array(train_data['neg_id']).reshape((-1,self.train_neg_num)),
-                 np.array(train_data['user_id']).reshape((-1,1)),]
+                 np.array(train_data['uid']).reshape((-1,1)),]
 
         val = [pad_sequences(val_data['hist'], maxlen=self.max_len,value=n_items), 
                np.array(val_data['pos_id']).reshape((-1,1)),
                np.array(val_data['neg_id']).reshape((-1,self.train_neg_num)),
-               np.array(val_data['user_id']).reshape((-1,1)),]
+               np.array(val_data['uid']).reshape((-1,1)),]
 
         test = [pad_sequences(test_data['hist'], maxlen=self.max_len,value=n_items),
                 np.array(test_data['pos_id']).reshape((-1,1)),
                 np.array(test_data['neg_id']).reshape((-1,self.test_neg_num)),
-                np.array(test_data['user_id']).reshape((-1,1)),]
+                np.array(test_data['uid']).reshape((-1,1)),]
 
         t1=time()
         print('creat dataset cost:[{:.1f}s]'.format(t1-t0))
@@ -170,14 +170,14 @@ class Data_Sequence():
             for ar in self.train[1:]:
                 np.random.set_state(state)
                 np.random.shuffle(ar)
-            x=1
+            #x=1
 
         # 3 生成batch数据
         start=idx*self.batch_size
         end=(idx+1)*self.batch_size
         end=end if end<self.train[0].shape[0] else self.train[0].shape[0]
         batch_data={
-            'user_id':self.train[3][start:end],
+            'uid':self.train[3][start:end],
             'hist':self.train[0][start:end],
             'pos_id':self.train[1][start:end],
             'neg_id':self.train[2][start:end],
@@ -189,7 +189,7 @@ class Data_Sequence():
     # 生成batch的feed_dict字典
     def generate_train_feed_dict(self,model,batch_data,drop_rate):
         feed_dict={
-            model.users:batch_data['user_id'],
+            model.users:batch_data['uid'],
             model.hist:batch_data['hist'],
             model.pos_items:batch_data['pos_id'],
             model.neg_items:batch_data['neg_id'],
@@ -217,7 +217,9 @@ class Data_Sequence():
 
     # 统计训练集、验证集、测试集的数据量
     def print_data_info(self):
-        print(self.train[3].shape)
+        #print(self.train[3].shape)
+        #print(self.val[3].shape)
+        #print(self.test[3].shape)
         print('train size:{}'.format(self.train[0].shape))
         print('val size:{}'.format(self.val[0].shape))
         print('test size:{}'.format(self.test[0].shape))

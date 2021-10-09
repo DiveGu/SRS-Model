@@ -24,7 +24,7 @@ class FPMC():
 
         self.batch_size=args.batch_size
         self.regs=eval(args.regs)
-        self.pairwise_loss=True
+        self.pairwise_loss=False
 
         # 定义输入placeholder
         self.users=tf.placeholder(tf.int32,shape=[None,None],name='users') # [N,1]
@@ -68,8 +68,8 @@ class FPMC():
         neg_embeddings_iu=self._get_mask_emb(self.weights['target_iu_embedding'],self.neg_items,self.n_items) # [N,1,k]
         neg_embeddings_ih=self._get_mask_emb(self.weights['target_ih_embedding'],self.neg_items,self.n_items) # [N,1,k]
 
-        print(u_embeddings_ui.shape)
-        print(his_embeddings_hi.shape)
+        #print(u_embeddings_ui.shape)
+        #print(his_embeddings_hi.shape)
 
         # 2 计算对pos neg的预测评分
         pos_preidct_scores=self._get_predict_score(u_embeddings_ui,his_embeddings_hi,pos_embeddings_iu,pos_embeddings_ih)
@@ -79,8 +79,10 @@ class FPMC():
         # 4 构造损失函数
         if(self.pairwise_loss):
             cf_loss=tf.log(tf.nn.sigmoid(pos_preidct_scores-neg_preidct_scores)+1e-24)
-            cf_loss=-(tf.reduce_mean(cf_loss)) # [N,1] -> 1
+            cf_loss=-(tf.reduce_mean(cf_loss)) # [N,target_num] -> 1
         else:
+            pos_preidct_scores=tf.nn.sigmoid(pos_preidct_scores) # [N,1]
+            neg_preidct_scores=tf.nn.sigmoid(neg_preidct_scores) # [N,neg_num]
             cf_loss_list=[-tf.math.log(pos_preidct_scores+1e-24),-tf.math.log(1-neg_preidct_scores+1e-24)]
             cf_loss=tf.reduce_mean(tf.concat(cf_loss_list,axis=1))
 
@@ -104,16 +106,22 @@ class FPMC():
     
     # 根据hist表示和target表示预测评分
     def _get_predict_score(self,ui,hi,iu,ih):
-        # [N,1,k],[N,len,k] [N,1,k] [N,1,k]
+        # [N,1,k],[N,s_len,k] [N,neg_num,k] [N,neg_num,k]
         #print(hist_e.get_shape())
-        logit_ui=tf.multiply(ui,iu) # [N,1,k]
-        logit_ui=tf.reduce_sum(logit_ui,axis=2,keepdims=False) # [N,1,k] -> [N,1]
+        logit_ui=tf.matmul(ui,tf.transpose(iu,perm=[0,2,1])) # [N,1,k]*[N,k,neg_num] -> [N,1,neg_num]
+        logit_ui=tf.reduce_sum(logit_ui,axis=1,keepdims=False) # [N,1,neg_num] -> [N,neg_num]
 
-        logit_hi=tf.multiply(hi,ih) # [N,len,k]
-        logit_hi=tf.reduce_sum(logit_hi,axis=2,keepdims=False) # [N,len,k] -> [N,len]
-        logit_hi=tf.reduce_sum(logit_hi,axis=1,keepdims=True) # [N,len] -> [N,1]
+        logit_hi=tf.matmul(hi,tf.transpose(ih,perm=[0,2,1])) # [N,s_len,k]*[N,k,neg_num] -> [N,s_len,neg_num]
+        logit_hi=tf.reduce_sum(logit_hi,axis=1,keepdims=False) # [N,s_len,neg_num] -> [N,neg_num]
 
-        return logit_ui+logit_hi # [N,1]
+        #logit_ui=tf.multiply(ui,iu) # [N,1,k]
+        #logit_ui=tf.reduce_sum(logit_ui,axis=2,keepdims=False) # [N,1,k] -> [N,1]
+
+        #logit_hi=tf.multiply(hi,ih) # [N,len,k]
+        #logit_hi=tf.reduce_sum(logit_hi,axis=2,keepdims=False) # [N,len,k] -> [N,len]
+        #logit_hi=tf.reduce_sum(logit_hi,axis=1,keepdims=True) # [N,len] -> [N,1]
+
+        return logit_ui+logit_hi # [N,target_num]
 
     # 训练
     def train(self,sess,feed_dict):

@@ -342,19 +342,49 @@ from utils.parser import parse_args
 
 # 测试 [N,5,10]+[5,10] 如何计算
 # 结果对于N的每一条数据 都进行 [5,10]+[5,10]的运算
+#import tensorflow.compat.v1 as tf
+
+## 5样本 len=2 k=3
+#X=np.arange(1,31).reshape((5,2,3))
+#X=tf.cast(X,tf.float32)
+#Y=tf.ones(shape=[2,3])
+#print(X.shape)
+#print(Y.shape)
+#Z=X+Y
+
+#with tf.Session() as sess:
+#    ret = sess.run(Z)
+
+#print(ret)
+
+
+# 测试 [N,4,k] * [N,k,2] 怎么算
+# [N,seq_len,K] [N,neg_num,k]
+# 注意 [N,1,k] 点乘 [N,4,k]是可以的
+# [N,4,k] 点乘 [N,3,k] 不可以 只能转置乘再sum [N,4,k] [N,k,3] -> [N,4,3] -> [N,3]
 import tensorflow.compat.v1 as tf
 
-# 5样本 len=2 k=3
-X=np.arange(1,31).reshape((5,2,3))
+X=np.arange(1,61).reshape((5,4,3))
 X=tf.cast(X,tf.float32)
-Y=tf.ones(shape=[2,3])
-print(X.shape)
-print(Y.shape)
-Z=X+Y
+#Y=np.arange(1,31).reshape((5,2,3))
+Y=tf.ones([5,2,3])
+Y=tf.cast(Y,tf.float32)
+print(X.shape) # [5,4,3]
+print(Y.shape) # [5,2,3]
+
+
+Z=tf.matmul(X,tf.transpose(Y,perm=[0,2,1])) # [5,4,3] [5,3,2]
+print(Z.shape) # [5,4,2]
+Z=tf.reduce_sum(Z,axis=1) # [5,2]
+print(Z.shape)
+
+with tf.Session() as sess:
+    ret = sess.run(X)
+
+print(ret)
 
 with tf.Session() as sess:
     ret = sess.run(Z)
 
 print(ret)
-
 
