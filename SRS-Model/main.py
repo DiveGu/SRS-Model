@@ -21,6 +21,7 @@ from utils.load_data import Data_Sequence
 from model.SASRec import SASRec
 from model.GRU4Rec import GRU4Rec
 from model.FPMC import FPMC
+from model.Caser import Caser
 
 SEED=2021
 tf.set_random_seed(SEED)
@@ -46,6 +47,9 @@ def main():
         model=GRU4Rec(args,data_config)
     elif(args.model_type=='FPMC'):
         model=FPMC(args,data_config)
+    elif(args.model_type=='Caser'):
+        model=Caser(args,data_config)
+
 
     # =================3：训练模型=====================
     config = tf.ConfigProto()

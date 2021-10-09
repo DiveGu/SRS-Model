@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument('--test_method',nargs='?',default='tloo',
                         help='Choose a way to get test dataset from {fo,ufo, loo, tloo, tfo}')
 
-    parser.add_argument('--max_len',type=int,default=1,
+    parser.add_argument('--max_len',type=int,default=50,
                         help='user behavior max length')
 
     parser.add_argument('--train_neg_num',type=int,default=1,
@@ -32,8 +32,8 @@ def parse_args():
                         help='the neg num when evaluate test performence')
 
     # 模型参数
-    parser.add_argument('--model_type',nargs='?',default='FPMC',
-                        help='Choose a model from {SASRec,GRU4Rec,FPMC}.')
+    parser.add_argument('--model_type',nargs='?',default='Caser',
+                        help='Choose a model from {SASRec,GRU4Rec,FPMC,Caser}.')
     parser.add_argument('--model_des',nargs='?',default='train_test',
                         help='record something')
 
@@ -46,12 +46,19 @@ def parse_args():
     # GRU4Rec参数
     parser.add_argument('--gru_layers', nargs='?', default='[20,20]',
                         help='gru_layers.')
+    # Caser参数
+    parser.add_argument('--h_filter_size', nargs='?', default='[2,4,8,12]',
+                        help='h_filter_size.')
+    parser.add_argument('--h_filter_num',type=int,default=4,
+                        help='the h_filter_num')
+    parser.add_argument('--v_filter_num',type=int,default=2,
+                        help='the v_filter_num')
 
     parser.add_argument('--embed_size',type=int,default=20,
                         help='CF embedding size')
-    parser.add_argument('--regs', nargs='?', default='[1e-5,1e-5,1e-6]',
+    parser.add_argument('--regs', nargs='?', default='[0,1e-5,1e-6]',
                         help='Regularization.')
-    parser.add_argument('--lr', type=float, default=1e-2,
+    parser.add_argument('--lr', type=float, default=5e-3,
                         help='Learning rate.')
     parser.add_argument('--batch_size', type=int, default=256,
                         help='CF batch size.')
