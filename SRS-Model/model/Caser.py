@@ -138,6 +138,8 @@ class Caser():
                                    strides=[1, 1, 1, 1], # 不用管这个维度
                                    padding='VALID',) # [N,1,1,num]
 
+            print('h size:{},conv1:{},pool1:{}'.format(h_size,conv1.get_shape(),pool1.get_shape()))
+
             h_feat.append(tf.squeeze(pool1,axis=[1,2])) # 新增 [N,num]
 
         # 【step 2】: v filter 
@@ -148,6 +150,8 @@ class Caser():
                            padding='VALID',)
         # 2-2：+bias
         conv2=tf.nn.bias_add(conv2,self.weights['v_filter_b'])
+
+        print(conv2.get_shape())
 
         # 【step 3】: concat[seq,uid]+MLP
         h_feat=tf.concat(h_feat,axis=1) # [N,num* ||h_size||]

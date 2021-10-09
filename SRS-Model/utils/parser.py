@@ -37,26 +37,31 @@ def parse_args():
     parser.add_argument('--model_des',nargs='?',default='train_test',
                         help='record something')
 
+    ## ---------------------------------------------------------
     # SASRec参数
     parser.add_argument('--block_num',type=int,default=2,
                         help='the block num')
     parser.add_argument('--head_num',type=int,default=1,
                         help='the head num')
+    ## ---------------------------------------------------------
 
     # GRU4Rec参数
     parser.add_argument('--gru_layers', nargs='?', default='[20,20]',
                         help='gru_layers.')
+    ## ---------------------------------------------------------
+
     # Caser参数
-    parser.add_argument('--h_filter_size', nargs='?', default='[2,4,8,12]',
+    parser.add_argument('--h_filter_size', nargs='?', default='[4,8,16,32]',
                         help='h_filter_size.')
-    parser.add_argument('--h_filter_num',type=int,default=4,
+    parser.add_argument('--h_filter_num',type=int,default=8,
                         help='the h_filter_num')
     parser.add_argument('--v_filter_num',type=int,default=2,
                         help='the v_filter_num')
+    ## ---------------------------------------------------------
 
     parser.add_argument('--embed_size',type=int,default=20,
                         help='CF embedding size')
-    parser.add_argument('--regs', nargs='?', default='[0,1e-5,1e-6]',
+    parser.add_argument('--regs', nargs='?', default='[1e-5,1e-5,1e-6]',
                         help='Regularization.')
     parser.add_argument('--lr', type=float, default=5e-3,
                         help='Learning rate.')

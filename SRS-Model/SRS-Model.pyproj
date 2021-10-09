@@ -26,10 +26,7 @@
     <Compile Include="model\Caser.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="model\DGCF.py" />
-    <Compile Include="model\FPMC.py">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="model\FPMC.py" />
     <Compile Include="model\GRU4Rec.py">
       <SubType>Code</SubType>
     </Compile>
